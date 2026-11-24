@@ -1,0 +1,44 @@
+
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "nepal-poultry-expo",
+  "compatibility_date": "2026-11-24",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+
+  "vars": {
+    "EMAIL_TO_PRIMARY": "admin@futurextrade.com",
+    "EMAIL_TO_SECONDARY": "info@futurextrade.com",
+    "GMAIL_USER": "web@futurexpr.com",
+    "GOOGLE_SHEET_ID": "1UWbNANSkXzZzL2DZjw71bXM7vzfVAESYHENsrCTDBg8",
+    "MONGODB_DB_NAME": "nepal_poultry_expo",
+    "NEXT_PUBLIC_SITE_URL": "https://www.nepalpoultryexpo.com"
+  },
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "nepal-poultry-expo"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "nepal-poultry-expo-opennext-cache"
+    }
+  ],
+
+  "images": {
+    "binding": "IMAGES"
+  }
+}
+																																																																																																																																																																																																																																																																																																																							

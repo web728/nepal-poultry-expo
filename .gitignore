@@ -48,3 +48,11 @@ next-env.d.ts
 
 # local MongoDB data (npm run dev:db)
 /.dev-mongo-data/
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example

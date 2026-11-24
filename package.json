@@ -6,12 +6,12 @@
     "node": ">=20.9.0"
   },
   "scripts": {
+    "build": "next build",
     "images:manifest": "node scripts/generate-image-manifest.mjs",
     "predev": "npm run images:manifest",
     "dev": "next dev",
     "dev:db": "node scripts/dev-mongo.mjs",
     "prebuild": "npm run images:manifest",
-    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -19,9 +19,14 @@
     "worker": "node --env-file-if-exists=.env.local scripts/outbox-worker.mjs",
     "outbox:status": "node --env-file-if-exists=.env.local scripts/outbox-admin.mjs status",
     "outbox:retry-dead": "node --env-file-if-exists=.env.local scripts/outbox-admin.mjs retry-dead",
-    "email:preview": "vitest run tests/templates-and-rows.test.ts"
+    "email:preview": "vitest run tests/templates-and-rows.test.ts",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.18",
     "framer-motion": "^14.14.0",
     "lucide-react": "^1.77.0",
     "mongodb": "^7.9.1",
@@ -44,6 +49,7 @@
     "mongodb-memory-server": "^11.3.0",
     "tailwindcss": "4.3.3",
     "typescript": "^5",
-    "vitest": "^5.1.1"
+    "vitest": "^5.1.1",
+    "wrangler": "^4.167.0"
   }
 }
