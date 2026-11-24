@@ -100,7 +100,7 @@ promoters: [
     name: "Government of Nepal, Ministry of Agriculture and Livestock Development",
     shortName: "MoALD",
     logo: {
-      src: "/logos/government-of-nepal-emblem.png",
+      src: "/logos/gvne.png",
       width: 195,
       height: 173,
     },
@@ -113,7 +113,7 @@ supporters: [
     name: "Nepal Poultry Federation",
     shortName: "NPF",
     logo: {
-      src: "/logos/nepal-poultry-federation.webp",
+      src: "/logos/npf.png",
       width: 418,
       height: 424,
     },
@@ -124,7 +124,7 @@ supporters: [
     name: "Nepal Feed Industry Association",
     shortName: "NFIA",
     logo: {
-      src: "/logos/nepal-feed-industry-association.png",
+      src: "/logos/nfia.png",
       width: 159,
       height: 172,
     },
@@ -137,7 +137,7 @@ supporters: [
   concurrentEvent: {
     name: "9th Nepal Agritech International Expo",
     shortName: "Nepal Agritech",
-    logo: { src: "/logos/nepal-agritech-international-expo.png", width: 696, height: 188 },
+    logo: { src: "/logos/agrictech.png", width: 696, height: 188 },
     description: "Held alongside the poultry and livestock expo.",
   } satisfies Organisation,
 

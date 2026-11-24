@@ -26,10 +26,7 @@ function UtilityBar() {
           </span>
         </p>
         <div className="flex items-center gap-5">
-          <a href={`tel:+${local.phoneDigits}`} className="hidden items-center gap-1.5 transition-colors hover:text-white lg:inline-flex">
-            <Phone aria-hidden className="size-3.5" />
-            {local.phone}
-          </a>
+         
           <BrochureLink className="inline-flex items-center gap-1.5 transition-colors hover:text-white">
             <Download aria-hidden className="size-3.5" />
             Brochure 2027

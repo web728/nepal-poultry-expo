@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { siteConfig } from "@/config/site";
 
 /**
@@ -11,14 +10,8 @@ export function EventFacts() {
   const heading =
     "eyebrow text-center text-ink-500";
 
-  const description =
-    "mt-2 text-center text-xs leading-relaxed text-ink-500";
-
-  const linkStyle =
-    "transition-colors duration-200 hover:text-brand-600";
-
   const logoStyle =
-    "object-contain transition-transform duration-300 ease-out motion-safe:hover:scale-105";
+    "object-contain origin-center transition-transform duration-300 ease-out motion-safe:hover:scale-105";
 
   return (
     <section
@@ -41,7 +34,7 @@ export function EventFacts() {
           />
 
           <dl>
-            {/* TOP ROW */}
+            {/* TOP ROW — PROMOTED & SUPPORTED BY */}
             <div className="grid grid-cols-2">
 
               {/* PROMOTED BY */}
@@ -59,9 +52,9 @@ export function EventFacts() {
 
                 <dd
                   className="
-                    mt-3 flex h-[68px]
-                    items-center justify-center
-                    sm:h-[76px]
+                    mt-3 flex h-[84px]
+                    w-full items-center justify-center
+                    sm:h-[96px]
                   "
                 >
                   {promoters.map((organisation) => (
@@ -72,23 +65,14 @@ export function EventFacts() {
                       title={organisation.name}
                       width={organisation.logo.width}
                       height={organisation.logo.height}
+                      sizes="(max-width: 639px) 90px, 104px"
                       className={`
                         ${logoStyle}
-                        h-[64px] w-auto
-                        sm:h-[72px]
+                        h-[80px] w-auto max-w-full
+                        sm:h-[92px]
                       `}
-                      sizes="82px"
                     />
                   ))}
-                </dd>
-
-                <dd className={description}>
-                  <Link
-                    href="/about/organizers#partners"
-                    className={linkStyle}
-                  >
-                    Government of Nepal (MoALD)
-                  </Link>
                 </dd>
               </div>
 
@@ -106,9 +90,10 @@ export function EventFacts() {
 
                 <dd
                   className="
-                    mt-3 flex h-[68px]
+                    mt-3 flex h-[84px]
                     w-full items-center justify-center
-                    gap-3 sm:h-[76px] sm:gap-6
+                    gap-3
+                    sm:h-[96px] sm:gap-7
                   "
                 >
                   {supporters.map((organisation) => (
@@ -116,8 +101,8 @@ export function EventFacts() {
                       key={organisation.name}
                       className="
                         relative aspect-square
-                        w-[62px] min-w-0 shrink
-                        sm:w-[70px]
+                        w-[78px] min-w-0 shrink
+                        sm:w-[90px]
                       "
                     >
                       <Image
@@ -125,20 +110,11 @@ export function EventFacts() {
                         alt={organisation.name}
                         title={organisation.name}
                         fill
-                        sizes="(max-width: 639px) 62px, 70px"
+                        sizes="(max-width: 639px) 78px, 90px"
                         className={logoStyle}
                       />
                     </div>
                   ))}
-                </dd>
-
-                <dd className={description}>
-                  <Link
-                    href="/about/organizers#partners"
-                    className={linkStyle}
-                  >
-                    NPF &amp; NFIA
-                  </Link>
                 </dd>
               </div>
             </div>
@@ -179,7 +155,7 @@ export function EventFacts() {
                       alt={organisation.name}
                       title={organisation.name}
                       fill
-                      sizes="(max-width: 639px) 40vw, 180px"
+                      sizes="(max-width: 639px) 45vw, 235px"
                       className={`
                         object-contain
                         origin-center
@@ -187,22 +163,13 @@ export function EventFacts() {
                         duration-300 ease-out
                         ${
                           organisation.shortName === "Media Space"
-                            ? "scale-[1.15] motion-safe:hover:scale-[1.20]"
+                            ? "scale-[1.30] motion-safe:hover:scale-[1.35]"
                             : "motion-safe:hover:scale-105"
                         }
                       `}
                     />
                   </div>
                 ))}
-              </dd>
-
-              <dd className={description}>
-                <Link
-                  href="/about/organizers"
-                  className={linkStyle}
-                >
-                  Futurex Group &amp; Media Space
-                </Link>
               </dd>
             </div>
           </dl>

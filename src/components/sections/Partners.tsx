@@ -13,37 +13,43 @@ function LogoTile({
   tall?: boolean;
 }) {
   const isMediaSpace = org.shortName === "Media Space";
+  const isConcurrent = org.shortName === "Nepal Agritech";
 
   return (
     <li
       className="
-        group flex h-full min-h-[160px]
-        flex-col items-center justify-center
-        gap-3 rounded-lg
+        group flex h-full min-h-[128px]
+        min-w-0 items-center justify-center
+        overflow-hidden rounded-lg
         border border-sand-200 bg-white
-        px-5 py-5 text-center
+        px-5 py-4
+        sm:min-h-[144px] sm:px-6 sm:py-5
         transition-all duration-300 ease-out
         hover:border-brand-500/30
         hover:shadow-sm
       "
     >
-      {/* Uniform logo container */}
+      {/* Logo container */}
       <div
         className="
-          relative flex h-[80px] w-full
-          max-w-[240px]
+          relative flex h-[96px]
+          w-full max-w-[280px]
           items-center justify-center
+          sm:h-[104px]
         "
       >
         {org.logo && (
           <div
             className={`
-              relative
+              relative min-w-0
               ${
                 tall
-                  ? "h-[74px] w-[84px] sm:h-[80px] sm:w-[90px]"
-                  : "h-[64px] w-full max-w-[210px]"
+                  ? "h-[88px] w-[96px] sm:h-[100px] sm:w-[112px]"
+                  : isConcurrent
+                    ? "h-[72px] w-full max-w-[240px]"
+                    : "h-[64px] w-full max-w-[220px]"
               }
+              ${isMediaSpace ? "w-[76%]" : ""}
             `}
           >
             <Image
@@ -53,8 +59,12 @@ function LogoTile({
               fill
               sizes={
                 tall
-                  ? "(max-width: 639px) 84px, 90px"
-                  : "(max-width: 639px) 180px, 210px"
+                  ? "(max-width: 639px) 96px, 112px"
+                  : isConcurrent
+                    ? "240px"
+                    : isMediaSpace
+                      ? "286px"
+                      : "220px"
               }
               className={`
                 object-contain
@@ -63,7 +73,7 @@ function LogoTile({
                 duration-300 ease-out
                 ${
                   isMediaSpace
-                    ? "scale-[1.15] motion-safe:group-hover:scale-[1.20]"
+                    ? "scale-[1.30] motion-safe:group-hover:scale-[1.35]"
                     : "motion-safe:group-hover:scale-105"
                 }
               `}
@@ -71,19 +81,6 @@ function LogoTile({
           </div>
         )}
       </div>
-
-      {/* Organisation name */}
-      <span
-        className="
-          flex min-h-[36px] items-center
-          justify-center
-          text-[0.8125rem]
-          font-medium leading-snug
-          text-ink-600
-        "
-      >
-        {org.name}
-      </span>
     </li>
   );
 }
@@ -138,6 +135,8 @@ function Group({
 /**
  * Promoted by / Supported by /
  * Organised by / Concurrent event.
+ *
+ * Clean logo-only partner cards.
  */
 export function Partners({
   showLink = true,
@@ -228,7 +227,7 @@ export function Partners({
               className="
                 size-4 transition-transform
                 duration-300
-                group-hover:translate-x-0.5
+                motion-safe:group-hover:translate-x-0.5
               "
             />
           </Link>
