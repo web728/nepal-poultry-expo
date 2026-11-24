@@ -115,29 +115,7 @@ export async function SiteFooter() {
             </p>
           </div>
         </div>
-
-        <div className="border-t border-white/10">
-          <div className="container-site grid gap-6 py-7 md:grid-cols-2">
-            {[
-              { label: "Promoted by", orgs: promoters },
-              { label: "Supported by", orgs: supporters },
-            ].map(({ label, orgs }) => (
-              <div key={label} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-                <p className="eyebrow shrink-0 text-ink-400">{label}</p>
-                <ul className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                  {orgs.map((o) => (
-                    <li key={o.name} className="flex items-center gap-3 text-sm text-ink-200">
-                      <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-white p-1">
-                        <Image src={o.logo.src} alt="" width={o.logo.width} height={o.logo.height} className="size-full object-contain" sizes="44px" />
-                      </span>
-                      <span className="max-w-[16rem] leading-snug">{o.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
+ 
 
         <div className="border-t border-white/10">
           <div className="container-site flex flex-col gap-3 py-6 text-sm text-ink-400 sm:flex-row sm:items-center sm:justify-between">

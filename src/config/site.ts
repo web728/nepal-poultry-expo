@@ -38,10 +38,10 @@ export const siteConfig = {
   locale: "en",
 
   logo: {
-    src: "/logos/nepal-poultry-livestock-expo-logo.png",
+    src: "/logos/logo.png",
     white: "/logos/nepal-poultry-livestock-expo-logo-white.png",
-    width: 502,
-    height: 360,
+    width: 602,
+    height: 460,
   },
 
   event: {
@@ -70,48 +70,69 @@ export const siteConfig = {
     },
   ],
 
-  organisers: [
-    {
-      name: "Futurex Trade Fair & Events Pvt. Ltd.",
-      shortName: "Futurex",
-      logo: { src: "/logos/futurex-trade-fair-and-events.png", width: 1536, height: 320 },
-      description:
-        "Based in New Delhi, Futurex organises international exhibitions, seminars and industry events. Its trade platforms connect manufacturers, suppliers and professional buyers, and support business networking and market development.",
+organisers: [
+  {
+    name: "Futurex Trade Fair & Events Pvt. Ltd.",
+    shortName: "Futurex",
+    logo: {
+      src: "/logos/futurex-trade-fair-and-events.png",
+      width: 1536,
+      height: 320,
     },
-    {
-      name: "Media Space Solutions Pvt. Ltd.",
-      shortName: "Media Space",
-      logo: { src: "/logos/media-space-solutions.png", width: 1041, height: 300 },
-      description:
-        "Based in Kathmandu, Media Space Solutions specialises in focused international exhibitions and event management. With local market knowledge and industry relationships, it connects Nepalese and international businesses and enables commercial collaboration.",
+    description:
+      "Based in New Delhi, Futurex organises international exhibitions, seminars and industry events. Its trade platforms connect manufacturers, suppliers and professional buyers, and support business networking and market development.",
+  },
+  {
+    name: "Media Space Solutions Pvt. Ltd.",
+    shortName: "Media Space",
+    logo: {
+      src: "/logos/media-space.png",
+      width: 1536,
+      height: 320,
     },
-  ] satisfies Organisation[],
+    description:
+      "Based in Kathmandu, Media Space Solutions specialises in focused international exhibitions and event management. With local market knowledge and industry relationships, it connects Nepalese and international businesses and enables commercial collaboration.",
+  },
+] satisfies Organisation[],
 
-  /** "Promoted by" on the brochure cover. */
-  promoters: [
-    {
-      name: "Government of Nepal, Ministry of Agriculture and Livestock Development",
-      shortName: "MoALD",
-      logo: { src: "/logos/government-of-nepal-emblem.png", width: 195, height: 173 },
-      description: "National Agriculture Modernization Program.",
+promoters: [
+  {
+    name: "Government of Nepal, Ministry of Agriculture and Livestock Development",
+    shortName: "MoALD",
+    logo: {
+      src: "/logos/government-of-nepal-emblem.png",
+      width: 195,
+      height: 173,
     },
-  ] satisfies Organisation[],
+    description: "National Agriculture Modernization Program.",
+  },
+] satisfies Organisation[],
 
-  /** "Supported by" on the brochure cover. */
-  supporters: [
-    {
-      name: "Nepal Poultry Federation",
-      shortName: "NPF",
-      logo: { src: "/logos/nepal-poultry-federation.webp", width: 418, height: 424 },
-      description: "National federation representing Nepal's poultry sector.",
+supporters: [
+  {
+    name: "Nepal Poultry Federation",
+    shortName: "NPF",
+    logo: {
+      src: "/logos/nepal-poultry-federation.webp",
+      width: 418,
+      height: 424,
     },
-    {
-      name: "Nepal Feed Industry Association",
-      shortName: "NFIA",
-      logo: { src: "/logos/nepal-feed-industry-association.png", width: 159, height: 172 },
-      description: "Association of Nepal's animal feed manufacturers (estd. 2046 BS).",
+    description:
+      "National federation representing Nepal's poultry sector.",
+  },
+  {
+    name: "Nepal Feed Industry Association",
+    shortName: "NFIA",
+    logo: {
+      src: "/logos/nepal-feed-industry-association.png",
+      width: 159,
+      height: 172,
     },
-  ] satisfies Organisation[],
+    description:
+      "Association of Nepal's animal feed manufacturers (estd. 2046 BS).",
+  },
+] satisfies Organisation[],
+ 
 
   concurrentEvent: {
     name: "9th Nepal Agritech International Expo",
