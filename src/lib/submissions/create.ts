@@ -2,6 +2,7 @@ import "server-only";
 import { randomInt } from "node:crypto";
 import { MongoServerError } from "mongodb";
 import { collections, getMongoClient } from "@/lib/mongodb/client";
+import { consumeBrochureVerification } from "@/lib/otp/service";
 import { buildJobs } from "@/lib/queue/outbox";
 import { sha256 } from "@/lib/security/request";
 import { FORM_CODES } from "@/data/form-options";
@@ -32,6 +33,7 @@ export async function createSubmission(envelope: SubmissionEnvelope, meta: Submi
     const session=client.startSession();
     try {
       return await session.withTransaction(async()=>{
+        if (envelope.formType === "brochure") await consumeBrochureVerification(db, session, envelope.data.email, envelope.verificationToken, envelope.idempotencyKey, exact);
         const prior=await keys.findOne({_id:envelope.idempotencyKey},{session});
         if(prior){if(prior.fingerprint!==exact)throw new SubmissionKeyConflict();return {submissionId:prior.submissionId,duplicate:true};}
         const old=await submissions.findOne({idempotencyKey:envelope.idempotencyKey},{session});

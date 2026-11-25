@@ -39,4 +39,4 @@ export interface OutboxJobDoc {
   completedAt?: Date | null;
 }
 export interface RateLimitDoc { _id: string; count: number; expiresAt: Date; }
-export type SubmitResponse = { ok: true; formType: FormType; duplicate?: boolean; brochureUrl?: string | null } | { ok: false; error: string; code: "validation" | "captcha" | "rate_limited" | "spam" | "unavailable" | "server_error"; fieldErrors?: Record<string,string> };
+export type SubmitResponse = { ok: true; formType: FormType; duplicate?: boolean; brochureUrl?: string | null } | { ok: false; error: string; code: "validation" | "otp" | "captcha" | "rate_limited" | "spam" | "unavailable" | "server_error"; fieldErrors?: Record<string,string> };

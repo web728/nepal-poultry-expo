@@ -16,7 +16,9 @@ const newKey = () => typeof crypto !== "undefined" && "randomUUID" in crypto
   ? crypto.randomUUID()
   : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 
-export function useFormSubmission<S extends z.ZodObject>({ formType, schema, initial, formRef, captchaRef }: {
+export function useFormSubmission<S extends z.ZodObject>({ formType, schema, initial, formRef, captchaRef, verificationToken, onVerificationInvalid }: {
+  verificationToken?: string;
+  onVerificationInvalid?: () => void;
   formType: FormType;
   schema: S;
   initial: Values;
@@ -102,6 +104,7 @@ export function useFormSubmission<S extends z.ZodObject>({ formType, schema, ini
       focusFirstError(fieldErrors);
       return;
     }
+    if (formType === "brochure" && !verificationToken) { setFormError("Please verify your email before requesting the brochure."); return; }
     const captchaToken = token.current;
     if (!captchaToken) {
       setCaptchaError("Please tick ‘I’m not a robot’ before submitting.");
@@ -122,7 +125,7 @@ export function useFormSubmission<S extends z.ZodObject>({ formType, schema, ini
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: abort.signal,
-        body: JSON.stringify({ formType, data: snapshot, recaptchaToken: captchaToken,
+        body: JSON.stringify({ formType, data: snapshot, recaptchaToken: captchaToken, ...(formType === "brochure" ? { verificationToken } : {}),
           idempotencyKey: attempt.current.key, sourcePage: pathname,
           elapsedMs: Math.round(performance.now() - startedAt.current), website: honeypot }),
       });
@@ -144,7 +147,7 @@ export function useFormSubmission<S extends z.ZodObject>({ formType, schema, ini
         setTouched(Object.fromEntries(Object.keys(snapshot).map(k => [k, true])));
         setFormError(body.error);
         focusFirstError(body.fieldErrors);
-      } else if (body.code === "captcha") setCaptchaError(body.error);
+      } else if (body.code === "otp") { onVerificationInvalid?.(); setFormError(body.error); } else if (body.code === "captcha") setCaptchaError(body.error);
       else setFormError(body.error);
     } catch {
       if (!mounted.current) return;

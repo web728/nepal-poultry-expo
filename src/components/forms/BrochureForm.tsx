@@ -1,6 +1,7 @@
 "use client";
-import { useId, useRef } from "react";
+import { useId, useRef, useState } from "react";
 import type { RecaptchaHandle } from "@/components/forms/Recaptcha";
+import { EmailOtp } from "@/components/forms/EmailOtp";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { siteConfig } from "@/config/site";
@@ -14,7 +15,9 @@ export function BrochureForm({ compact = false }: { compact?: boolean }) {
   const id = (name: string) => `${uid}-${name}`;
   const formRef = useRef<HTMLFormElement>(null);
   const captchaRef = useRef<RecaptchaHandle>(null);
-  const f = useFormSubmission({ formType: "brochure", schema: brochureFields, initial: { fullName: "", companyName: "", country: "", email: "", phone: "", consent: false }, formRef, captchaRef });
+  const [verificationToken, setVerificationToken] = useState("");
+  const [otpVersion, setOtpVersion] = useState(0);
+  const f = useFormSubmission({ formType: "brochure", schema: brochureFields, initial: { fullName: "", companyName: "", country: "", email: "", phone: "", consent: false }, formRef, captchaRef, verificationToken, onVerificationInvalid: () => { setVerificationToken(""); setOtpVersion(v => v + 1); } });
   if (f.status === "success" && f.result) {
     return <FormSuccess title="Thank you for your request." message={f.result.brochureUrl ? "Your brochure is ready to download. You will also receive a personal download link by email." : "Your brochure request has been received successfully."} email={String(f.values.email)} actions={compact ? undefined : [{ href: "/register/exhibitor", label: "Book a stand" }]}
       brochureUrl={f.result.brochureUrl} brochureMissingNote="The upcoming expo brochure is being finalised. We will email it to you once it is available."
@@ -35,8 +38,9 @@ export function BrochureForm({ compact = false }: { compact?: boolean }) {
       <Field id={id("country")} label="Country" required error={errors.country}>
         <CountryCombobox id={id("country")} name="country" value={String(f.values.country)} onChange={v => f.setValue("country", v)} onBlur={() => f.blur("country")} invalid={Boolean(errors.country)} required describedBy={describedBy(id("country"), errors.country)} />
       </Field>
-      <Field id={id("email")} label="Business Email" required error={errors.email}>
-        <TextInput {...f.fieldProps("email")} id={id("email")} invalid={Boolean(errors.email)} aria-describedby={describedBy(id("email"), errors.email)} required autoComplete="email" type="email" inputMode="email" placeholder="name@company.com" />
+      <Field id={id("email")} label="Business Email" required error={errors.email} className={cn(!compact && "md:col-span-2")}>
+        <TextInput {...f.fieldProps("email")} id={id("email")} invalid={Boolean(errors.email)} aria-describedby={describedBy(id("email"), errors.email)} required autoComplete="email" type="email" inputMode="email" placeholder="name@company.com" onChange={e => { if (!f.submitting) { setVerificationToken(""); f.onCaptchaToken(null); f.setValue("email", e.target.value); } }} />
+        <EmailOtp key={`${String(f.values.email)}-${otpVersion}`} email={String(f.values.email)} verified={Boolean(verificationToken)} onVerified={setVerificationToken} disabled={f.submitting} />
       </Field>
       <Field id={id("phone")} label="Mobile / WhatsApp" required error={errors.phone} hint="Include the country code, e.g. +977" className={cn(!compact && "md:col-span-2")}>
         <TextInput {...f.fieldProps("phone")} id={id("phone")} invalid={Boolean(errors.phone)} aria-describedby={describedBy(id("phone"), errors.phone, "hint")} required autoComplete="tel" type="tel" inputMode="tel" placeholder="+977 98XXXXXXXX" />
@@ -49,7 +53,7 @@ export function BrochureForm({ compact = false }: { compact?: boolean }) {
       </label>
       {errors.consent && <p id={`${id("consent")}-error`} role="alert" className="mt-1.5 pl-8 text-xs font-medium text-danger-600">{errors.consent}</p>}
     </div>
-    <SubmitRow label="Get the brochure" submitting={f.submitting} captchaRef={captchaRef} onToken={f.onCaptchaToken} onExpired={f.onCaptchaExpired} captchaError={f.captchaError}
-    />
+    {verificationToken ? <SubmitRow label="Get the brochure" submitting={f.submitting} captchaRef={captchaRef} onToken={f.onCaptchaToken} onExpired={f.onCaptchaExpired} captchaError={f.captchaError}
+    /> : <p className="text-sm text-ink-600" role="status">Verify your email to unlock the brochure download.</p>}
   </form>;
 }

@@ -13,6 +13,7 @@ export const env = {
   get emailFromName(){return read("EMAIL_FROM_NAME")??"Nepal Poultry & Livestock International Expo";},
   get emailToPrimary(){return read("EMAIL_TO_PRIMARY");},
   get emailToSecondary(){return read("EMAIL_TO_SECONDARY");},
+  get otpSecret(){return read("OTP_SECRET");},
   get cronSecret(){return read("CRON_SECRET");},
   get signingSecret(){return read("BROCHURE_LINK_SECRET")??read("CRON_SECRET");},
   get ipHashSalt(){return read("IP_HASH_SALT")??read("CRON_SECRET");},
