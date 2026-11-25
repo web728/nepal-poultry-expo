@@ -1,5 +1,5 @@
 import "server-only";
-import { randomBytes } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { MongoServerError } from "mongodb";
 import { collections, getMongoClient } from "@/lib/mongodb/client";
 import { buildJobs } from "@/lib/queue/outbox";
@@ -7,106 +7,49 @@ import { sha256 } from "@/lib/security/request";
 import { FORM_CODES } from "@/data/form-options";
 import type { SubmissionEnvelope } from "@/lib/validation/schemas";
 import type { SubmissionDoc } from "@/types/submission";
-
-/** Identical content from the same form within this window is treated as a double submit. */
-const DEDUPE_WINDOW_MS = 10 * 60_000;
-
-const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no 0/O/1/I/L
-
+const DEDUPE_WINDOW_MS = 600_000;
+const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export function newSubmissionId(formType: SubmissionEnvelope["formType"], now = new Date()): string {
-  const d = now.toISOString(); // YYYY-MM-DD…
-  const ymd = `${d.slice(2, 4)}${d.slice(5, 7)}${d.slice(8, 10)}`;
-  const bytes = randomBytes(6);
-  const rand = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join("");
-  return `NPE-${FORM_CODES[formType]}-${ymd}-${rand}`;
+  const date = now.toISOString().slice(2,10).replace(/-/g, "");
+  const random = Array.from({length:6}, () => ALPHABET[randomInt(ALPHABET.length)]).join("");
+  return `NPE-${FORM_CODES[formType]}-${date}-${random}`;
 }
-
-/** Stable hash of the submitted content, independent of key order and letter case. */
-export function contentHash(formType: string, data: Record<string, unknown>): string {
-  const normalised = Object.keys(data)
-    .sort()
-    .map((k) => `${k}=${String(data[k] ?? "").toLowerCase().replace(/\s+/g, " ").trim()}`)
-    .join("|");
-  return sha256(`${formType}|${normalised}`);
+export function contentHash(formType: string, data: Record<string,unknown>): string {
+  return sha256(JSON.stringify([formType,Object.keys(data).sort().map(k=>[k,String(data[k]??"").toLowerCase().replace(/\s+/g," ").trim()])]));
 }
-
 export type CreateResult = { submissionId: string; duplicate: boolean };
-
-function isDuplicateKey(err: unknown): boolean {
-  return err instanceof MongoServerError && err.code === 11000;
-}
-
-function transactionsUnsupported(err: unknown): boolean {
-  // 20 = IllegalOperation ("Transaction numbers are only allowed on a replica set member or mongos")
-  return err instanceof MongoServerError && (err.code === 20 || /replica set|Transaction numbers/i.test(err.message));
-}
-
-/**
- * Persists a validated submission together with its outbox jobs.
- * Returns only after both are durably written, so the caller can acknowledge the user.
- */
-export async function createSubmission(
-  envelope: SubmissionEnvelope,
-  meta: SubmissionDoc["meta"],
-): Promise<CreateResult> {
-  const { submissions, outbox } = await collections();
-  const data = envelope.data as Record<string, unknown>;
-
-  // 1. Same idempotency key (retry / double click) → same submission.
-  const sameKey = await submissions.findOne({ idempotencyKey: envelope.idempotencyKey }, { projection: { submissionId: 1 } });
-  if (sameKey) return { submissionId: sameKey.submissionId, duplicate: true };
-
-  // 2. Same content submitted again within a few minutes → same submission.
-  const dedupeHash = contentHash(envelope.formType, data);
-  const recent = await submissions.findOne(
-    { dedupeHash, createdAt: { $gte: new Date(Date.now() - DEDUPE_WINDOW_MS) } },
-    { projection: { submissionId: 1 } },
-  );
-  if (recent) return { submissionId: recent.submissionId, duplicate: true };
-
-  const now = new Date();
-  const doc: SubmissionDoc = {
-    submissionId: newSubmissionId(envelope.formType, now),
-    formType: envelope.formType,
-    data,
-    sourcePage: envelope.sourcePage,
-    status: "received",
-    delivery: { googleSheets: "pending", adminEmailPrimary: "pending", adminEmailSecondary: "pending", userConfirmation: "pending" },
-    idempotencyKey: envelope.idempotencyKey,
-    dedupeHash,
-    meta,
-    createdAt: now,
-    updatedAt: now,
-  };
-  const jobs = buildJobs(doc, now);
-
-  const client = await getMongoClient();
-  const session = client.startSession();
-  try {
-    // 3. Submission + jobs commit atomically (MongoDB Atlas is always a replica set).
-    await session.withTransaction(async () => {
-      await submissions.insertOne(doc, { session });
-      await outbox.insertMany(jobs, { session, ordered: true });
-    });
-  } catch (err) {
-    if (isDuplicateKey(err)) {
-      const existing = await submissions.findOne({ idempotencyKey: envelope.idempotencyKey }, { projection: { submissionId: 1 } });
-      if (existing) return { submissionId: existing.submissionId, duplicate: true };
-    }
-    if (!transactionsUnsupported(err)) throw err;
-
-    // Standalone MongoDB (local development only): write sequentially, undo on failure.
-    await submissions.insertOne(doc);
+export class SubmissionKeyConflict extends Error { constructor(){super("Submission key is already associated with different data");this.name="SubmissionKeyConflict";} }
+export async function createSubmission(envelope: SubmissionEnvelope, meta: SubmissionDoc["meta"]): Promise<CreateResult> {
+  const {db, submissions, outbox}=await collections();
+  const data: Record<string,unknown> = envelope.data;
+  const hash=contentHash(envelope.formType,data);
+  const exact=sha256(JSON.stringify([envelope.formType,Object.keys(data).sort().map(k=>[k,data[k]])]));
+  const now=new Date();
+  const keys=db.collection<{_id:string; submissionId:string; fingerprint:string; expiresAt:Date}>("submission_keys");
+  const locks=db.collection<{_id:string; touchedAt:Date}>("submission_dedupe_locks");
+  const client=await getMongoClient();
+  for(let retry=0;retry<4;retry++) {
+    const session=client.startSession();
     try {
-      await outbox.insertMany(jobs, { ordered: true });
-    } catch (jobErr) {
-      await submissions.deleteOne({ submissionId: doc.submissionId });
-      await outbox.deleteMany({ submissionId: doc.submissionId });
-      throw jobErr;
-    }
-  } finally {
-    await session.endSession();
+      return await session.withTransaction(async()=>{
+        const prior=await keys.findOne({_id:envelope.idempotencyKey},{session});
+        if(prior){if(prior.fingerprint!==exact)throw new SubmissionKeyConflict();return {submissionId:prior.submissionId,duplicate:true};}
+        const old=await submissions.findOne({idempotencyKey:envelope.idempotencyKey},{session});
+        if(old){if(sha256(JSON.stringify([old.formType,Object.keys(old.data).sort().map(k=>[k,old.data[k]])]))!==exact)throw new SubmissionKeyConflict();return {submissionId:old.submissionId,duplicate:true};}
+        // Serialize concurrent identical-content submissions within the transaction.
+        await locks.updateOne({_id:hash},{$set:{touchedAt:now}},{upsert:true,session});
+        const recent=await submissions.findOne({dedupeHash:hash,createdAt:{$gte:new Date(now.getTime()-DEDUPE_WINDOW_MS)}},{session,projection:{submissionId:1}});
+        const submissionId=recent?.submissionId??newSubmissionId(envelope.formType,now);
+        if(!recent){
+          const doc:SubmissionDoc={submissionId,formType:envelope.formType,data,sourcePage:envelope.sourcePage,status:"received",delivery:{googleSheets:"pending",adminEmailPrimary:"pending",adminEmailSecondary:"pending",userConfirmation:"pending"},idempotencyKey:envelope.idempotencyKey,dedupeHash:hash,meta,createdAt:now,updatedAt:now};
+          await submissions.insertOne(doc,{session});
+          await outbox.insertMany(buildJobs(doc,now),{session,ordered:true});
+        }
+        await keys.insertOne({_id:envelope.idempotencyKey,submissionId,fingerprint:exact,expiresAt:new Date(now.getTime()+7*86400000)},{session});
+        return {submissionId,duplicate:Boolean(recent)};
+      },{readConcern:{level:"snapshot"},writeConcern:{w:"majority"},maxCommitTimeMS:5000});
+    } catch(err){if(!(err instanceof MongoServerError && err.code===11000 && retry<3))throw err;}
+    finally{await session.endSession();}
   }
-
-  return { submissionId: doc.submissionId, duplicate: false };
+  throw new Error("Could not save submission");
 }
