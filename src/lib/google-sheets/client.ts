@@ -5,11 +5,11 @@ import { IntegrationNotConfiguredError } from "@/lib/errors";
 import { SHEET_HEADERS } from "@/lib/submissions/fields";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 const API = "https://sheets.googleapis.com/v4/spreadsheets";
-// Final 16-column schema; reject legacy headers until migrated.
+// Match the existing CRM sheet without modifying its headers.
 export const CLEAN_HEADERS = [...SHEET_HEADERS];
 type ServiceAccount = {client_email:string;private_key:string};
 let cached: {token:string; expiresAt:number} | undefined;
-let pending: Promise<string> | undefined;
+
 async function refreshToken(): Promise<string> {
   const b64=env.googleServiceAccountBase64;
   if (!b64 || !env.googleSheetId) throw new IntegrationNotConfiguredError("Google Sheets");
@@ -29,7 +29,7 @@ async function refreshToken(): Promise<string> {
 }
 async function accessToken():Promise<string> {
   if(cached && cached.expiresAt-60000>Date.now()) return cached.token;
-  return pending ??= refreshToken().finally(()=>{pending=undefined;});
+  return refreshToken();
 }
 async function sheetsFetch(path:string,init?:RequestInit):Promise<unknown> {
   const token=await accessToken();
@@ -39,21 +39,25 @@ async function sheetsFetch(path:string,init?:RequestInit):Promise<unknown> {
   return res.json();
 }
 const tabRange=(range:string)=>encodeURIComponent(`'${env.googleSheetTab.replace(/'/g,"''")}'!${range}`);
-async function ensureHeaderRow(){
-  if(CLEAN_HEADERS.length!==16) throw new Error("Expected 16 clean sheet columns");
-  const result=await sheetsFetch(`/values/${tabRange("1:1")}`) as {values?:string[][]};
-  const existing=result.values?.[0]??[];
-  if(!existing.length){await sheetsFetch(`/values/${tabRange("A1:P1")}?valueInputOption=RAW`,{method:"PUT",body:JSON.stringify({values:[CLEAN_HEADERS]})});return;}
-  if(existing.length!==CLEAN_HEADERS.length || existing.some((v,i)=>v!==CLEAN_HEADERS[i])) throw new Error("Sheet header mismatch: migrate the old reference column before retrying");
+async function ensureHeaderRow() {
+  const result = await sheetsFetch(`/values/${tabRange("A1:T1")}`) as {values?: unknown[][]};
+  const existing = result.values?.[0] ?? [];
+  if (CLEAN_HEADERS.some((header, i) => String(existing[i] ?? "").trim() !== header)) {
+    throw new Error("Sheet header mismatch: expected the 20 CRM headers in A1:T1");
+  }
 }
-export async function rowExists(row:readonly string[]):Promise<boolean>{
-  const res=await sheetsFetch(`/values/${tabRange("A2:P")}?valueRenderOption=UNFORMATTED_VALUE`) as {values?:unknown[][]};
-  return (res.values??[]).some(r=>row.every((v,i)=>String(r[i]??"")===v));
+export async function rowExists(row: readonly string[]): Promise<boolean> {
+  const res = await sheetsFetch(`/values/${tabRange("A2:N")}?valueRenderOption=UNFORMATTED_VALUE`) as {values?: unknown[][]};
+  // Manual corrections/status columns never participate in retry matching.
+  return (res.values ?? []).some(r => row.slice(0, 14).every((v,i) => String(r[i] ?? "") === v));
 }
-export async function appendRow(row:string[],{checkExisting}:{checkExisting:boolean}){
-  if(row.length!==16) throw new Error("Unexpected sheet row length");
+export async function appendRow(row: string[], {checkExisting}: {checkExisting: boolean}) {
+  if (row.length !== CLEAN_HEADERS.length) throw new Error("Unexpected sheet row length");
   await ensureHeaderRow();
-  if(checkExisting && await rowExists(row)) return {appended:false as const};
-  await sheetsFetch(`/values/${tabRange("A1:P")}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:"POST",body:JSON.stringify({values:[row]})});
+  if (checkExisting && await rowExists(row)) return {appended:false as const};
+  // Only write A:N. Insert a new row; leave O:T for the CRM team.
+  await sheetsFetch(`/values/${tabRange("A1:T")}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+    method:"POST", body:JSON.stringify({majorDimension:"ROWS", values:[row.slice(0,14)]})
+  });
   return {appended:true as const};
 }

@@ -8,4 +8,4 @@ export const FIELD_LABELS: Record<FormType, [key: string, label: string][]> = {
 export function personName(data: Record<string, unknown>): string { return String(data.fullName ?? data.contactPerson ?? "").trim(); }
 export function companyName(data: Record<string, unknown>): string { return String(data.companyName ?? data.organisation ?? "").trim(); }
 export function formatValue(value: unknown): string { return value === true ? "Yes" : value === false ? "No" : value == null || value === "" ? "—" : String(value); }
-export const SHEET_HEADERS = ["Submitted At (UTC)","Submitted At (IST)","Form Type","Full Name / Contact Person","Company / Organisation","Designation","Email","Mobile / WhatsApp","Country","Preferred Booth Size","Products & Services","Business / Category","Area of Interest","Message","Privacy Consent","Source Page"] as const;
+export const SHEET_HEADERS = ["Date", "Platform", "Register As", "Company Name", "Contact Person", "Designation", "Email Id", "Mobile No.", "Website", "Address", "Country", "Area of Interest", "Info. Get From", "Message", "Corrections", "STATUS 1", "STATUS 2", "STATUS 3", "STATUS 4", "STATUS 5"] as const;
