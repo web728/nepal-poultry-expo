@@ -15,13 +15,13 @@ export const maxDuration = 30;
 const MAX_BODY_BYTES = 32 * 1024;
 const MIN_FILL_MS = 1500;
 const RATE_LIMIT = { limit: 8, windowSeconds: 10 * 60 };
-type PublicResponse = Extract<SubmitResponse, { ok: false }> | {
+type PublicResponse = (Extract<SubmitResponse, { ok: false }> & { diagnostic?: Record<string, unknown> }) | {
   ok: true; formType: FormType; duplicate: boolean; brochureUrl?: string | null;
 };
 function json(body: PublicResponse, status: number, headers?: HeadersInit) {
   const output = new Headers(headers);
   output.set("Cache-Control", "no-store");
-  output.set("X-Forms-Revision", "cf-db-scope-v3");
+  output.set("X-Forms-Revision", "forms-debug-v4");
   return Response.json(body, { status, headers: output });
 }
 class BodyTooLarge extends Error {}
@@ -46,8 +46,30 @@ async function readJson(request: NextRequest): Promise<unknown> {
     return JSON.parse(text + decoder.decode());
   } finally { reader.releaseLock(); }
 }
+function diagnostic(stage: string, err: unknown) {
+  const e = err as { name?: unknown; code?: unknown; codeName?: unknown; message?: unknown; cause?: { name?: unknown; code?: unknown; message?: unknown } } | null;
+  const safe = (v: unknown) => typeof v === "number" ? v : typeof v === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(v) ? v : undefined;
+  const message = String(e?.message ?? "") + " " + String(e?.cause?.message ?? "");
+  const category = /scope missing/i.test(message) ? "mongodb_scope_missing"
+    : /different request|different I\/O context/i.test(message) ? "cross_request_io"
+    : /not implemented|not supported/i.test(message) ? "runtime_unsupported"
+    : /authentication failed|bad auth/i.test(message) ? "authentication_failed"
+    : /timed out|timeout|server selection/i.test(message) ? "connection_timeout"
+    : /index.*conflict|already exists with/i.test(message) ? "index_conflict"
+    : /not configured/i.test(message) ? "missing_configuration"
+    : "unclassified";
+  const details = { revision: "forms-debug-v4", stage, exception: safe(e?.name) ?? "UnknownError", errorCode: safe(e?.code), codeName: safe(e?.codeName), cause: safe(e?.cause?.name), causeCode: safe(e?.cause?.code), category };
+  console.error("[forms-debug-v4] " + JSON.stringify(details));
+  return json({ ok: false, code: "server_error", error: `Submission failed at ${stage} (${details.exception}).`, diagnostic: details }, 500);
+}
+
+export function GET() {
+  return Response.json({ revision: "forms-debug-v4", endpoint: "submissions", method: "POST" }, { headers: { "Cache-Control": "no-store", "X-Forms-Revision": "forms-debug-v4" } });
+}
+
 export async function POST(request: NextRequest) {
-  return withMongoScope(() => handleSubmission(request));
+  try { return await withMongoScope(() => handleSubmission(request)); }
+  catch (err) { return diagnostic("request-scope", err); }
 }
 async function handleSubmission(request: NextRequest) {
   let body: unknown;
@@ -74,13 +96,13 @@ async function handleSubmission(request: NextRequest) {
     stage = "ip-hash";
     if (ip && !env.ipHashSalt) {
       console.error("[submissions] Missing IP_HASH_SALT or CRON_SECRET");
-      return json({ ok: false, code: "unavailable", error: "The form is temporarily unavailable. Please try again later." }, 503);
+      return json({ ok: false, code: "unavailable", error: "Missing server security configuration.", diagnostic: { revision: "forms-debug-v4", stage: "ip-hash", category: "missing_configuration" } }, 503);
     }
     const ipHash = hashIp(ip);
     stage = "rate-limit / captcha";
     const [limit, captcha] = await Promise.all([
-      rateLimit(`submit:${ipHash ?? "unknown"}`, RATE_LIMIT),
-      verifyRecaptcha(envelope.recaptchaToken, ip),
+      rateLimit(`submit:${ipHash ?? "unknown"}`, RATE_LIMIT).catch(err => { stage = "rate-limit"; throw err; }),
+      verifyRecaptcha(envelope.recaptchaToken, ip).catch(err => { stage = "captcha-verification"; throw err; }),
     ]);
     if (!limit.allowed) return json({ ok: false, code: "rate_limited", error: "Too many submissions from your network. Please wait a few minutes and try again." }, 429, { "Retry-After": String(limit.retryAfterSeconds) });
     if (!captcha.ok) {
@@ -116,9 +138,8 @@ async function handleSubmission(request: NextRequest) {
     if (err instanceof SubmissionKeyConflict) return json({ok:false,code:"validation",error:"This request key was already used. Reload the form and try again."},409);
     if (err instanceof DatabaseNotConfiguredError) {
       console.error("[submissions] MongoDB is not configured");
-      return json({ ok: false, code: "unavailable", error: "The form is temporarily unavailable. Please try again later." }, 503);
+      return json({ ok: false, code: "unavailable", error: "Database configuration is missing.", diagnostic: { revision: "forms-debug-v4", stage, category: "missing_configuration" } }, 503);
     }
-    logMongo(`submissions:${stage}`, err);
-    return json({ ok: false, code: "server_error", error: "Something went wrong on our side. Please try again in a moment." }, 500);
+    return diagnostic(stage, err);
   }
 }
