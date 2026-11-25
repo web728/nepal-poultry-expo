@@ -58,7 +58,7 @@ export function EmailOtp({ email, verified, onVerified, disabled }: { email: str
     }
   }
   if (verified) return <p role="status" className="mt-3 flex items-center gap-2 text-sm font-medium text-success-600"><CheckCircle2 className="size-5" aria-hidden /> Email verified successfully</p>;
-  if (!validEmail.success) return <p className="mt-2 text-xs text-ink-500">Enter your email to receive a verification code.</p>;
+  if (!validEmail.success) return <div className="mt-2 space-y-2"><p className="text-xs text-ink-500">Enter a valid email to receive a verification code.</p><button type="button" disabled className="rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white opacity-50">Send OTP</button></div>;
   const button = "inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50";
   return <div className="mt-3 space-y-3 rounded-md border border-sand-200 bg-sand-50 p-3">
     <p className="flex items-center gap-2 text-sm font-medium text-ink-900"><Mail className="size-4" aria-hidden /> Verify your email</p>

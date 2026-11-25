@@ -22,7 +22,7 @@ type PublicResponse = (Extract<SubmitResponse, { ok: false }> & { diagnostic?: R
 function json(body: PublicResponse, status: number, headers?: HeadersInit) {
   const output = new Headers(headers);
   output.set("Cache-Control", "no-store");
-  output.set("X-Forms-Revision", "forms-otp-v1");
+  output.set("X-Forms-Revision", "forms-otp-v2");
   return Response.json(body, { status, headers: output });
 }
 class BodyTooLarge extends Error {}
@@ -59,13 +59,13 @@ function diagnostic(stage: string, err: unknown) {
     : /index.*conflict|already exists with/i.test(message) ? "index_conflict"
     : /not configured/i.test(message) ? "missing_configuration"
     : "unclassified";
-  const details = { revision: "forms-otp-v1", stage, exception: safe(e?.name) ?? "UnknownError", errorCode: safe(e?.code), codeName: safe(e?.codeName), cause: safe(e?.cause?.name), causeCode: safe(e?.cause?.code), category };
-  console.error("[forms-otp-v1] " + JSON.stringify(details));
+  const details = { revision: "forms-otp-v2", stage, exception: safe(e?.name) ?? "UnknownError", errorCode: safe(e?.code), codeName: safe(e?.codeName), cause: safe(e?.cause?.name), causeCode: safe(e?.cause?.code), category };
+  console.error("[forms-otp-v2] " + JSON.stringify(details));
   return json({ ok: false, code: "server_error", error: `Submission failed at ${stage} (${details.exception}).`, diagnostic: details }, 500);
 }
 
 export function GET() {
-  return Response.json({ revision: "forms-otp-v1", endpoint: "submissions", method: "POST" }, { headers: { "Cache-Control": "no-store", "X-Forms-Revision": "forms-otp-v1" } });
+  return Response.json({ revision: "forms-otp-v2", endpoint: "submissions", method: "POST" }, { headers: { "Cache-Control": "no-store", "X-Forms-Revision": "forms-otp-v2" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -98,7 +98,7 @@ async function handleSubmission(request: NextRequest) {
     stage = "ip-hash";
     if (ip && !env.ipHashSalt) {
       console.error("[submissions] Missing IP_HASH_SALT or CRON_SECRET");
-      return json({ ok: false, code: "unavailable", error: "Missing server security configuration.", diagnostic: { revision: "forms-otp-v1", stage: "ip-hash", category: "missing_configuration" } }, 503);
+      return json({ ok: false, code: "unavailable", error: "Missing server security configuration.", diagnostic: { revision: "forms-otp-v2", stage: "ip-hash", category: "missing_configuration" } }, 503);
     }
     const ipHash = hashIp(ip);
     stage = "rate-limit / captcha";
@@ -141,7 +141,7 @@ async function handleSubmission(request: NextRequest) {
     if (err instanceof SubmissionKeyConflict) return json({ok:false,code:"validation",error:"This request key was already used. Reload the form and try again."},409);
     if (err instanceof DatabaseNotConfiguredError) {
       console.error("[submissions] MongoDB is not configured");
-      return json({ ok: false, code: "unavailable", error: "Database configuration is missing.", diagnostic: { revision: "forms-otp-v1", stage, category: "missing_configuration" } }, 503);
+      return json({ ok: false, code: "unavailable", error: "Database configuration is missing.", diagnostic: { revision: "forms-otp-v2", stage, category: "missing_configuration" } }, 503);
     }
     return diagnostic(stage, err);
   }

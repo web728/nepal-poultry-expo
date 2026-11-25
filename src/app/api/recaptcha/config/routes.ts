@@ -1,6 +1,6 @@
 import "server-only";
 export const dynamic = "force-dynamic";
-const headers = { "Cache-Control": "no-store", "X-Recaptcha-Revision": "runtime-v1" };
+const headers = { "Cache-Control": "no-store", "X-Recaptcha-Revision": "runtime-v2" };
 export function GET() {
   // Dynamic lookup avoids Next.js build-time substitution.
   const read = (name: string) => process.env[name]?.trim();
