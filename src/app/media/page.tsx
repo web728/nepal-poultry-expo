@@ -9,9 +9,9 @@ import { Gallery } from "@/components/gallery/Gallery";
 import { FacebookIcon } from "@/components/icons";
 
 export const metadata = pageMetadata({
-  title: "Media & Photo Gallery — 2017 Edition",
+  title: "Media & Photo Gallery",
   description:
-    "Photos from Nepal Poultry & Livestock International Expo 2017 at Chitwan Expo Center, Bharatpur: stands, equipment, sessions and awards.",
+    "Photos from Nepal Poultry & Livestock International Expo at Chitwan Expo Center, Bharatpur: stands, equipment, sessions and awards.",
   path: "/media",
 });
 
