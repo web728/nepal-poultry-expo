@@ -27,7 +27,10 @@
     "OUTBOX_INTERVAL_SECONDS": "30",
     "OUTBOX_WORKER_URL": "http://127.0.0.1:3000",
     "RECAPTCHA_SECRET_KEY": "6LfkJDAuAAAAAEGXo6e6LBJbG3f_L7-bpQwfLpGj",
-    "RECAPTCHA_ALLOWED_HOSTNAMES":"www.nepalpoultryexpo.com,nepalpoultryexpo.com"
+    "RECAPTCHA_ALLOWED_HOSTNAMES":"www.nepalpoultryexpo.com,nepalpoultryexpo.com",
+    "IP_HASH_SALT":"f45445c0d0360c3bcc9671102f304c07ce174c27873e14548688eac391f1ff94",
+    "BROCHURE_LINK_SECRET":"f14ff3b58182c843aec435f9d95bc42f025eff94d824003c2df29ed683cb4da3",
+    "CRON_SECRET": "401ba4cfcad33d8e5b2f9db2e09fb2f8fdec65ed731032104c9823b91ca002a0"
   },
 
   "assets": {
