@@ -24,9 +24,7 @@ export function AboutIntro({ showLink = true }: { showLink?: boolean }) {
               {ABOUT_COPY.lead.replace(`${siteConfig.name} ${siteConfig.edition}`, "")}
             </p>
             <p>{ABOUT_COPY.body}</p>
-            <p className="text-[0.9375rem] text-ink-500">
-              The previous edition took place at {past.venue} ({past.dates}).
-            </p>
+          
           </div>
           {showLink && (
             <ButtonLink href="/about" variant="link" className="mt-7 gap-1.5 text-[0.9375rem]">

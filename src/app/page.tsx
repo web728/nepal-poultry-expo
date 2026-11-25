@@ -32,7 +32,7 @@ export default function HomePage() {
       <SegmentsSection />
       <ExhibitVisitSplit />
       <VisitorGroups />
-      <GalleryPreview />
+      
       <Partners />
       <CtaBand />
       {event && <JsonLd data={event} />}

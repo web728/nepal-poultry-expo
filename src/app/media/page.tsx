@@ -27,7 +27,7 @@ export default function MediaPage() {
         ]}
         eyebrow="Media"
         title="Gallery and media"
-        intro={`Photographs from the ${past.year} edition — ${past.dates} at ${past.venue}.`}
+        intro={`Photographs from the previous edition.`}
          
       />
 
@@ -36,7 +36,7 @@ export default function MediaPage() {
           <SectionHeading
             id="gallery-heading"
             eyebrow={`${images.length} photographs`}
-            title={`Nepal Poultry & Livestock International Expo ${past.year}`}
+            title={`Nepal Poultry & Livestock International Expo`}
             intro="Exhibitor stands, equipment on show, technical sessions and the award ceremony. Select a photo to view it full size."
           />
           <div className="mt-10">

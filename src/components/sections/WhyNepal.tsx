@@ -25,7 +25,7 @@ export function WhyNepal() {
               <RevealItem key={f.label} className="flex flex-col-reverse justify-end bg-ink-950 px-4 py-8 sm:px-8 sm:py-10">
                 <dt className="mt-3 text-sm font-medium leading-snug text-ink-300 sm:text-[0.9375rem]">
                   {f.label}
-                  <sup className="ml-0.5 text-[0.65rem]">{f.source === "nso" ? "1" : "2"}</sup>
+               
                 </dt>
                 <dd className="whitespace-nowrap font-display text-[1.75rem] font-extrabold leading-none tracking-tight sm:text-[2.6rem] xl:text-[3.1rem]">
                   {npr && <span className="mr-1.5 align-top text-[0.42em] font-bold tracking-wide text-ink-200">NPR</span>}
@@ -35,17 +35,7 @@ export function WhyNepal() {
             );
           })}
         </RevealGroup>
-        <ol className="mt-5 space-y-1 text-xs leading-relaxed text-ink-400">
-          <li>
-            <sup>1</sup> {INDUSTRY_SOURCES.nso.text}{" "}
-            <a href={INDUSTRY_SOURCES.nso.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-ink-200 underline underline-offset-2 hover:text-flame-300">
-              Read the report <ExternalLink aria-hidden className="size-3" />
-            </a>
-          </li>
-          <li>
-            <sup>2</sup> {INDUSTRY_SOURCES.brochure.text} National figures, not expo statistics.
-          </li>
-        </ol>
+       
       </div>
     </Section>
   );

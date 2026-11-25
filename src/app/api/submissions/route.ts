@@ -7,7 +7,7 @@ import { createSubmission, SubmissionKeyConflict } from "@/lib/submissions/creat
 import { processOutbox } from "@/lib/queue/outbox";
 import { brochureLink } from "@/lib/brochure/brochure";
 import { env } from "@/lib/env";
-import { DatabaseNotConfiguredError } from "@/lib/mongodb/client";
+import { DatabaseNotConfiguredError, withMongoScope, logMongo } from "@/lib/mongodb/client";
 import type { SubmitResponse } from "@/types/submission";
 import type { FormType } from "@/data/form-options";
 
@@ -21,6 +21,7 @@ type PublicResponse = Extract<SubmitResponse, { ok: false }> | {
 function json(body: PublicResponse, status: number, headers?: HeadersInit) {
   const output = new Headers(headers);
   output.set("Cache-Control", "no-store");
+  output.set("X-Forms-Revision", "cf-db-scope-v3");
   return Response.json(body, { status, headers: output });
 }
 class BodyTooLarge extends Error {}
@@ -46,6 +47,9 @@ async function readJson(request: NextRequest): Promise<unknown> {
   } finally { reader.releaseLock(); }
 }
 export async function POST(request: NextRequest) {
+  return withMongoScope(() => handleSubmission(request));
+}
+async function handleSubmission(request: NextRequest) {
   let body: unknown;
   try { body = await readJson(request); }
   catch (err) {
@@ -98,8 +102,8 @@ export async function POST(request: NextRequest) {
     // The cron/worker remains responsible for recovery. No SMTP or Sheets on the response path.
     try {
       after(async () => {
-        try { await processOutbox({ submissionId, limit: 8 }); }
-        catch { console.error("[outbox] Immediate delivery attempt failed; scheduled retry required"); }
+        try { await withMongoScope(() => processOutbox({ submissionId, limit: 8 })); }
+        catch (err) { logMongo("outbox-immediate", err); }
       });
     } catch { console.error("[outbox] Immediate scheduling unavailable; scheduled retry required"); }
     let brochureUrl: string | null | undefined;
@@ -114,13 +118,7 @@ export async function POST(request: NextRequest) {
       console.error("[submissions] MongoDB is not configured");
       return json({ ok: false, code: "unavailable", error: "The form is temporarily unavailable. Please try again later." }, 503);
     }
-    // Log only structured error metadata, never raw messages, URIs or form data.
-    const e = err as { name?: unknown; code?: unknown; codeName?: unknown; cause?: { name?: unknown; code?: unknown } } | null;
-    const safe = (v: unknown) => typeof v === "number" ? v : typeof v === "string" && /^[A-Za-z0-9_]{1,80}$/.test(v) ? v : undefined;
-    console.error("[submissions] Request processing failed", JSON.stringify({
-      stage, name: safe(e?.name), code: safe(e?.code), codeName: safe(e?.codeName),
-      causeName: safe(e?.cause?.name), causeCode: safe(e?.cause?.code),
-    }));
+    logMongo(`submissions:${stage}`, err);
     return json({ ok: false, code: "server_error", error: "Something went wrong on our side. Please try again in a moment." }, 500);
   }
 }
