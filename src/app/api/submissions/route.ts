@@ -6,6 +6,7 @@ import { getClientIp, hashIp } from "@/lib/security/request";
 import { createSubmission, SubmissionKeyConflict } from "@/lib/submissions/create";
 import { processOutbox } from "@/lib/queue/outbox";
 import { brochureLink } from "@/lib/brochure/brochure";
+import { env } from "@/lib/env";
 import { DatabaseNotConfiguredError } from "@/lib/mongodb/client";
 import type { SubmitResponse } from "@/types/submission";
 import type { FormType } from "@/data/form-options";
@@ -63,9 +64,16 @@ export async function POST(request: NextRequest) {
   if (envelope.website || (envelope.elapsedMs !== undefined && envelope.elapsedMs < MIN_FILL_MS)) {
     return json({ ok: false, code: "spam", error: "We could not accept this submission. Please try again." }, 400);
   }
+  let stage = "client-ip";
   try {
     const ip = getClientIp(request.headers);
+    stage = "ip-hash";
+    if (ip && !env.ipHashSalt) {
+      console.error("[submissions] Missing IP_HASH_SALT or CRON_SECRET");
+      return json({ ok: false, code: "unavailable", error: "The form is temporarily unavailable. Please try again later." }, 503);
+    }
     const ipHash = hashIp(ip);
+    stage = "rate-limit / captcha";
     const [limit, captcha] = await Promise.all([
       rateLimit(`submit:${ipHash ?? "unknown"}`, RATE_LIMIT),
       verifyRecaptcha(envelope.recaptchaToken, ip),
@@ -82,6 +90,7 @@ export async function POST(request: NextRequest) {
       return json({ ok: false, code: captcha.reason === "not_configured" ? "unavailable" : "captcha", error: messages[captcha.reason] }, captcha.reason === "not_configured" ? 503 : 400);
     }
     // createSubmission must persist both submission and durable outbox jobs before returning.
+    stage = "mongodb-transaction";
     const { submissionId, duplicate } = await createSubmission(envelope, {
       ipHash, userAgent: request.headers.get("user-agent")?.slice(0, 300) ?? undefined,
       recaptchaHostname: captcha.hostname,
@@ -105,7 +114,13 @@ export async function POST(request: NextRequest) {
       console.error("[submissions] MongoDB is not configured");
       return json({ ok: false, code: "unavailable", error: "The form is temporarily unavailable. Please try again later." }, 503);
     }
-    console.error("[submissions] Request processing failed");
+    // Log only structured error metadata, never raw messages, URIs or form data.
+    const e = err as { name?: unknown; code?: unknown; codeName?: unknown; cause?: { name?: unknown; code?: unknown } } | null;
+    const safe = (v: unknown) => typeof v === "number" ? v : typeof v === "string" && /^[A-Za-z0-9_]{1,80}$/.test(v) ? v : undefined;
+    console.error("[submissions] Request processing failed", JSON.stringify({
+      stage, name: safe(e?.name), code: safe(e?.code), codeName: safe(e?.codeName),
+      causeName: safe(e?.cause?.name), causeCode: safe(e?.cause?.code),
+    }));
     return json({ ok: false, code: "server_error", error: "Something went wrong on our side. Please try again in a moment." }, 500);
   }
 }
