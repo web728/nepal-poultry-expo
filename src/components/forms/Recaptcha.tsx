@@ -4,22 +4,8 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 type GRecaptcha = { render: (el: HTMLElement, opts: Record<string, unknown>) => number; reset: (id?: number) => void };
 declare global { interface Window { grecaptcha?: GRecaptcha & { ready?: (cb: () => void) => void }; __npeRecaptchaOnload?: () => void } }
 let scriptPromise: Promise<GRecaptcha> | null = null;
-let keyPromise: Promise<string> | null = null;
-function loadKey(): Promise<string> {
-  if (!keyPromise) {
-    keyPromise = (async () => {
-      const abort = new AbortController();
-      const timer = setTimeout(() => abort.abort(), 10000);
-      try {
-        const response = await fetch("/api/recaptcha/config", { cache: "no-store", signal: abort.signal });
-        const body = await response.json();
-        if (!response.ok || body.ok !== true || typeof body.siteKey !== "string" || !body.siteKey.trim()) throw new Error("site-key-unavailable");
-        return body.siteKey.trim();
-      } finally { clearTimeout(timer); }
-    })().catch(err => { keyPromise = null; throw err; });
-  }
-  return keyPromise;
-}
+// Google reCAPTCHA v2 public site key; never put the private secret here.
+const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim() || "6LfkJDAuAAAAALsi53xcaurXmbE_7LPpjh11wfUI";
 function loadRecaptcha(): Promise<GRecaptcha> {
   if (window.grecaptcha?.render) return Promise.resolve(window.grecaptcha);
   if (scriptPromise) return scriptPromise;
@@ -72,18 +58,18 @@ export const Recaptcha = forwardRef<RecaptchaHandle, Props>(function Recaptcha({
       if (started || cancelled) return;
       started = true;
       try {
-        const [siteKey, g] = await Promise.all([loadKey(), loadRecaptcha()]);
+        const g = await loadRecaptcha();
         if (cancelled) return;
-        widgetId.current = g.render(host, { sitekey: siteKey, theme: "light",
+        widgetId.current = g.render(host, { sitekey: SITE_KEY, theme: "light",
           callback: (token: string) => { if (!cancelled) { setFailure(""); callbacks.current.onToken(token); } },
           "expired-callback": () => { if (!cancelled) { callbacks.current.onToken(null); callbacks.current.onExpired?.(); } },
           "error-callback": () => { if (!cancelled) { callbacks.current.onToken(null); setFailure("Security check failed. Please retry."); } },
         });
         setReady(true);
-      } catch (err) {
+      } catch {
         if (cancelled) return;
         callbacks.current.onToken(null);
-        setFailure(err instanceof Error && err.message === "site-key-unavailable" ? "Security configuration unavailable. Please retry or contact support." : "Security check could not load. Please retry.");
+        setFailure("Security check could not load. Please retry.");
       }
     };
     if (eager || typeof IntersectionObserver === "undefined") void mount();
@@ -99,7 +85,7 @@ export const Recaptcha = forwardRef<RecaptchaHandle, Props>(function Recaptcha({
       {!ready && !failure && <div aria-hidden className="absolute inset-0 animate-pulse rounded-md border border-ink-200 bg-sand-100" />}
       <div ref={holder} />
     </div>
-    {failure && <div role="alert" className="space-y-2 text-xs font-medium text-danger-600"><p>{failure}</p><button type="button" className="text-brand-700 underline" onClick={() => { callbacks.current.onToken(null); keyPromise = null; setReady(false); setFailure(""); setRetry(n => n + 1); }}>Retry security check</button></div>}
+    {failure && <div role="alert" className="space-y-2 text-xs font-medium text-danger-600"><p>{failure}</p><button type="button" className="text-brand-700 underline" onClick={() => { callbacks.current.onToken(null); setReady(false); setFailure(""); setRetry(n => n + 1); }}>Retry security check</button></div>}
     {error && !failure && <p role="alert" className="text-xs font-medium text-danger-600">{error}</p>}
   </div>;
 });
