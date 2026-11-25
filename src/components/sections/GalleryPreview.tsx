@@ -1,55 +1,55 @@
-import Image from "next/image";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { siteConfig } from "@/config/site";
-import { photo, type ManifestImage } from "@/lib/images";
 import { Section, SectionHeading } from "@/components/ui/Section";
-import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
-import { cn } from "@/lib/cn";
+import { Reveal } from "@/components/motion/Reveal";
 
-function Tile({ image, className, sizes }: { image: ManifestImage; className?: string; sizes: string }) {
-  return (
-    <RevealItem className={cn("group relative overflow-hidden bg-sand-200", className)}>
-      <Image
-        src={image.src}
-        alt={image.alt}
-        fill
-        sizes={sizes}
-        placeholder="blur"
-        blurDataURL={image.blurDataURL}
-        className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-      />
-    </RevealItem>
-  );
-}
-
-/** Asymmetric preview of the past-edition photo library, linking to the full gallery. */
+/** Image-free introduction to the past-edition media library. */
 export function GalleryPreview() {
   const past = siteConfig.pastEditions[0];
-  const [lead, a, b, c, d] = [photo(24), photo(54), photo(41), photo(38), photo(75)];
+
   return (
     <Section tone="white" labelledBy="gallery-title">
       <div className="container-site">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <SectionHeading
-            id="gallery-title"
-            eyebrow="Gallery"
-            title={`Scenes from the ${past.year} edition`}
-            intro={`${past.dates} at ${past.venue}.`}
+        <div className="relative overflow-hidden rounded-3xl border border-sand-200 bg-sand-50 px-7 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-24 -top-28 size-80 rounded-full bg-brand-500/5 blur-3xl"
           />
-          <Link href="/media" className="group inline-flex shrink-0 items-center gap-1.5 font-semibold text-ink-900 hover:text-brand-700">
-            View all photos
-            <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
 
-        <RevealGroup className="mt-10 grid auto-rows-[9.5rem] grid-cols-2 gap-2 sm:auto-rows-[12rem] md:grid-cols-4 md:gap-3 lg:auto-rows-[14rem]">
-          <Tile image={lead} className="col-span-2 row-span-2" sizes="(min-width: 768px) 50vw, 100vw" />
-          <Tile image={a} sizes="(min-width: 768px) 25vw, 50vw" />
-          <Tile image={b} sizes="(min-width: 768px) 25vw, 50vw" />
-          <Tile image={c} sizes="(min-width: 768px) 25vw, 50vw" />
-          <Tile image={d} sizes="(min-width: 768px) 25vw, 50vw" />
-        </RevealGroup>
+          <div
+            aria-hidden
+            className="grid-lines pointer-events-none absolute inset-0 opacity-30"
+          />
+
+          <div className="relative flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <SectionHeading
+                id="gallery-title"
+                eyebrow="Past editions"
+                title={`Explore the ${past.year} edition`}
+                intro={`${past.dates} at ${past.venue}. Discover more about the event and its industry highlights.`}
+              />
+
+              <p className="mt-5 max-w-xl text-[0.9375rem] leading-relaxed text-ink-600">
+                Explore the event's media collection and get a closer look at
+                the poultry and livestock industry gathering.
+              </p>
+            </div>
+
+            <Link
+              href="/media"
+              className="group inline-flex w-fit shrink-0 items-center gap-2 rounded-full bg-ink-950 px-6 py-3.5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-brand-600"
+            >
+              Explore event media
+              <ArrowRight
+                aria-hidden
+                className="size-4 transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </Link>
+          </div>
+        </div>
       </div>
     </Section>
   );
