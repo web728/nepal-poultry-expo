@@ -28,8 +28,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Disable Cache Components for Cloudflare Workers runtime compatibility.
+  cacheComponents: false,
+  partialPrefetching: false,
+
   poweredByHeader: false,
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
