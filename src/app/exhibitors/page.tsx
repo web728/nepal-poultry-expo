@@ -47,7 +47,7 @@ export default function ExhibitorsPage() {
             opportunities across Nepal&apos;s poultry and livestock sectors — {siteConfig.event.datesLabel}, {siteConfig.event.venue.shortName}, Kathmandu.
           </>
         }
-        image={photo(77)}
+        
       >
         <ButtonLink href="/register/exhibitor" size="lg">
           Book a Stand

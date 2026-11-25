@@ -57,7 +57,7 @@ export default function OrganizersPage() {
         eyebrow="About the organisers"
         title="Organisers, promoters and supporters"
         intro="Who runs the expo, the government programme that promotes it and the industry associations that support it."
-        image={photo(21)}
+      
       />
 
       <Section tone="white" labelledBy="organisers-title">

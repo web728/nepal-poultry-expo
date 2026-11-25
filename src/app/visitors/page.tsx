@@ -29,7 +29,7 @@ export default function VisitorsPage() {
         eyebrow="Visitor information"
         title="Meet the poultry & livestock industry in one place"
         intro={`Compare suppliers, see equipment up close and pick up practical know-how for your farm or business — ${event.datesLabel}, ${event.venue.shortName}, Kathmandu.`}
-        image={photo(53)}
+       
       >
         <ButtonLink href="/register/visitor" size="lg">
           Register to Visit

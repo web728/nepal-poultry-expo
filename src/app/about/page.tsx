@@ -43,7 +43,7 @@ export default function AboutPage() {
         eyebrow="About the expo"
         title="Your gateway to Nepal's poultry & livestock market"
         intro={siteConfig.positioning}
-        image={photo(74)}
+        
       />
 
       <AboutIntro showLink={false} />

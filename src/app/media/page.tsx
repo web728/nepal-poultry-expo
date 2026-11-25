@@ -28,7 +28,7 @@ export default function MediaPage() {
         eyebrow="Media"
         title="Gallery and media"
         intro={`Photographs from the ${past.year} edition — ${past.dates} at ${past.venue}.`}
-        image={photo(68)}
+         
       />
 
       <Section tone="white" labelledBy="gallery-heading">
