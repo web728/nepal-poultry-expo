@@ -24,25 +24,6 @@ function getMimeType(filePath: string) {
   return mimeTypes[extension] ?? "application/octet-stream";
 }
 
-/** Reads the original background photo without native image processing. */
-async function photoDataUrl(imagePath: string) {
-  const rel = path
-    .normalize(imagePath.replace(/^\/?(images\/)?/, ""))
-    .replace(/^(\.\.[\\/])+/, "");
-
-  const absolutePath = path.join(
-    process.cwd(),
-    "public",
-    "images",
-    rel
-  );
-
-  const file = await readFile(absolutePath);
-  const mimeType = getMimeType(absolutePath);
-
-  return `data:${mimeType};base64,${file.toString("base64")}`;
-}
-
 /** Reads the event logo and converts it into a data URL. */
 async function logoDataUrl() {
   const logoPath = path.join(
@@ -58,20 +39,21 @@ async function logoDataUrl() {
   return `data:${mimeType};base64,${file.toString("base64")}`;
 }
 
-/** Branded 1200×630 social image generated directly by Next ImageResponse. */
+/**
+ * Branded 1200x630 social image generated without external photographs.
+ * The optional photo property is retained for backward compatibility
+ * with existing route callers, but is intentionally not used.
+ */
 export async function renderOgImage({
   title,
   eyebrow,
-  photo,
+  photo: _photo,
 }: {
   title: string;
   eyebrow: string;
-  photo: string;
+  photo?: string;
 }) {
-  const [bg, logo] = await Promise.all([
-    photoDataUrl(photo),
-    logoDataUrl(),
-  ]);
+  const logo = await logoDataUrl();
 
   const { event } = siteConfig;
 
@@ -83,32 +65,52 @@ export async function renderOgImage({
           height: "100%",
           display: "flex",
           position: "relative",
-          backgroundColor: "#0e0e10",
+          overflow: "hidden",
+          background:
+            "linear-gradient(115deg, #0e0e10 0%, #191719 48%, #641e19 100%)",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={bg}
-          width={1200}
-          height={630}
-          alt=""
+        {/* Decorative background elements */}
+        <div
           style={{
             position: "absolute",
-            inset: 0,
-            objectFit: "cover",
+            right: -140,
+            top: -220,
+            width: 650,
+            height: 650,
+            borderRadius: "50%",
+            border: "2px solid rgba(255,255,255,0.08)",
+            display: "flex",
           }}
         />
 
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            right: -70,
+            top: -150,
+            width: 500,
+            height: 500,
+            borderRadius: "50%",
+            border: "2px solid rgba(255,255,255,0.07)",
             display: "flex",
-            backgroundImage:
-              "linear-gradient(100deg, rgba(14,14,16,0.97) 0%, rgba(14,14,16,0.9) 48%, rgba(14,14,16,0.5) 100%)",
           }}
         />
 
+        <div
+          style={{
+            position: "absolute",
+            right: 0,
+            bottom: 0,
+            width: 500,
+            height: 500,
+            background:
+              "radial-gradient(circle, rgba(227,43,27,0.17), transparent 70%)",
+            display: "flex",
+          }}
+        />
+
+        {/* Main content */}
         <div
           style={{
             position: "relative",
@@ -119,10 +121,12 @@ export async function renderOgImage({
             width: "100%",
           }}
         >
+          {/* Event logo */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logo} width={154} height={110} alt="" />
 
           <div style={{ display: "flex", flexDirection: "column" }}>
+            {/* Eyebrow */}
             <div style={{ display: "flex" }}>
               <div
                 style={{
@@ -140,6 +144,7 @@ export async function renderOgImage({
               </div>
             </div>
 
+            {/* Main title */}
             <div
               style={{
                 display: "flex",
@@ -158,6 +163,7 @@ export async function renderOgImage({
               {title}
             </div>
 
+            {/* Event information */}
             <div
               style={{
                 display: "flex",
@@ -183,6 +189,7 @@ export async function renderOgImage({
           </div>
         </div>
 
+        {/* Signature bottom accent */}
         <div
           style={{
             position: "absolute",
@@ -191,7 +198,7 @@ export async function renderOgImage({
             bottom: 0,
             height: 12,
             display: "flex",
-            backgroundImage:
+            background:
               "linear-gradient(90deg, #e32b1b, #ff5e21, #ffa47e)",
           }}
         />
