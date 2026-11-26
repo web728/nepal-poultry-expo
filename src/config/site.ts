@@ -100,7 +100,7 @@ promoters: [
     name: "Government of Nepal, Ministry of Agriculture and Livestock Development",
     shortName: "MoALD",
     logo: {
-      src: "/logos/gvne.png",
+      src: "/logos/govt-nepal.png",
       width: 195,
       height: 173,
     },
@@ -182,6 +182,7 @@ export const mainNav: NavItem[] = [
     children: [
       { label: "About the Expo", href: "/about", description: "The 2027 edition and why Nepal" },
       { label: "Organisers & Partners", href: "/about/organizers", description: "Organisers, promoters and supporters" },
+      { label: "Venue", href: "/venue", description: "" },
     ],
   },
   {

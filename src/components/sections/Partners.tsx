@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -8,9 +9,11 @@ import { Reveal } from "@/components/motion/Reveal";
 function LogoTile({
   org,
   tall = false,
+  promoted = false,
 }: {
   org: Organisation;
   tall?: boolean;
+  promoted?: boolean;
 }) {
   const isMediaSpace = org.shortName === "Media Space";
   const isConcurrent = org.shortName === "Nepal Agritech";
@@ -31,23 +34,28 @@ function LogoTile({
     >
       {/* Logo container */}
       <div
-        className="
-          relative flex h-[96px]
-          w-full max-w-[280px]
+        className={`
+          relative flex w-full max-w-[280px]
           items-center justify-center
-          sm:h-[104px]
-        "
+          ${
+            promoted || tall
+              ? "h-[108px] sm:h-[116px]"
+              : "h-[96px] sm:h-[104px]"
+          }
+        `}
       >
         {org.logo && (
           <div
             className={`
               relative min-w-0
               ${
-                tall
-                  ? "h-[88px] w-[96px] sm:h-[100px] sm:w-[112px]"
-                  : isConcurrent
-                    ? "h-[72px] w-full max-w-[240px]"
-                    : "h-[64px] w-full max-w-[220px]"
+                promoted
+                  ? "h-[108px] w-full max-w-[220px] sm:h-[116px] sm:max-w-[240px]"
+                  : tall
+                    ? "h-[104px] w-[120px] max-w-full sm:h-[116px] sm:w-[132px]"
+                    : isConcurrent
+                      ? "h-[72px] w-full max-w-[240px]"
+                      : "h-[64px] w-full max-w-[220px]"
               }
               ${isMediaSpace ? "w-[76%]" : ""}
             `}
@@ -58,13 +66,15 @@ function LogoTile({
               title={org.name}
               fill
               sizes={
-                tall
-                  ? "(max-width: 639px) 96px, 112px"
-                  : isConcurrent
-                    ? "240px"
-                    : isMediaSpace
-                      ? "286px"
-                      : "220px"
+                promoted
+                  ? "(max-width: 639px) 220px, 240px"
+                  : tall
+                    ? "(max-width: 639px) 120px, 132px"
+                    : isConcurrent
+                      ? "240px"
+                      : isMediaSpace
+                        ? "286px"
+                        : "220px"
               }
               className={`
                 object-contain
@@ -89,11 +99,13 @@ function Group({
   label,
   orgs,
   tall = false,
+  promoted = false,
   cols,
 }: {
   label: string;
   orgs: readonly Organisation[];
   tall?: boolean;
+  promoted?: boolean;
   cols: string;
 }) {
   return (
@@ -125,6 +137,7 @@ function Group({
             key={org.name}
             org={org}
             tall={tall}
+            promoted={promoted}
           />
         ))}
       </ul>
@@ -174,7 +187,7 @@ export function Partners({
           <Group
             label="Promoted by"
             orgs={promoters}
-            tall
+            promoted
             cols="grid-cols-1"
           />
 

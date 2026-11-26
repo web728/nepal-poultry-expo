@@ -52,7 +52,7 @@ export default function BrochurePage() {
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-xs text-ink-500">PDF · 4 pages · about 7.8 MB</p>
+         
           </div>
         }
       >
